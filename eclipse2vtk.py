@@ -9,15 +9,21 @@
 # E.g., a term of 500*45.0 means "repeat 45.0 500 times".
 # This can appear in any section, apparently.
 
+from collections import OrderedDict
+
 def ReadGrid(gridfilename):
 
 	# X dim, Y dim, Z dim	
 	celldims = []
 
-	# x0, y0, z0, x1, y1, z1?
+	# x0 y0 zmin x0 y0 zmax x0 y1 zmin x0 y1 zmax
+	# so z, y, x, fastest, with z flipping between min and max
+    # size should be Xdim+1*Ydim+1*2
 	coords = []
 		
-	# ?
+	# ONLY the z-coord for the bricks.
+    # size should be Xdim*Ydim*Zdim*8
+	# this runs fastest in x then y
 	zcorn = []
 
 	gridfile = open(gridfilename)
@@ -52,6 +58,14 @@ def ReadGrid(gridfilename):
 	print 'len(coords):   ', len(coords)
 	print 'len(zcorn):    ', len(zcorn)
 	WriteArrayToFile(coords)
+
+	xcoords = coords[0::3]
+	xcoords = list(OrderedDict.fromkeys(xcoords))
+	print xcoords
+	ycoords = coords[1::3]
+	ycoords = list(OrderedDict.fromkeys(ycoords))
+	print ycoords
+
 
 def ConvertTokens(line):
 	values = []
