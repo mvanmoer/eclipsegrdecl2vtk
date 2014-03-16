@@ -3,25 +3,23 @@
 # 20140312 - start
 
 # Convert Eclipse format to VTK
-# 2 inputs, a grid file and a data file.
-# 
-# This file format uses a type of primitive compression.
-# E.g., a term of 500*45.0 means "repeat 45.0 500 times".
-# This can appear in any section, apparently.
+# inputs, a grid file and a data file.
+
+#!/usr/bin/env vtkpython
 
 from collections import OrderedDict
 import sys
+from vtk import *
 
 def ReadGrid(gridfilename):
 
-	# x0 y0 zmin x0 y0 zmax x0 y1 zmin x0 y1 zmax
-	# so z, y, x, fastest, with z flipping between min and max
-    # size should be Xdim+1*Ydim+1*2
+	# Contains expanded COORDS section.
 	coords = []
 		
-	# ONLY the z-coord for the bricks.
-    # size should be Xdim*Ydim*Zdim*8
-	# this runs fastest in x then y but to account for faults, all
+	# Contains expanded ZCORN section which has ONLY the z-coord 
+	# for the bricks. x- y-coords are derived from coords[].
+    # Size should be Xdim*Ydim*Zdim*8.
+	# This runs fastest in x then y but to account for faults, all
 	# cells have individual corners.
 	zcorn = []
 
@@ -34,7 +32,7 @@ def ReadGrid(gridfilename):
 			ydim = int(ydim)
 			zdim = int(zdim)
 		elif line.startswith('COORDSYS'):
-			# Skip for now
+			# Skip, was matching against just COORD
 			next
 		elif line.startswith('COORD'):
 			while True:
@@ -55,13 +53,6 @@ def ReadGrid(gridfilename):
 
 	gridfile.close()
 
-	print 'xdim: ',xdim,' ydim: ',ydim,' zdim: ',zdim	
-	print 'len(coords):   ', len(coords)
-	print 'len(zcorn):    ', len(zcorn)
-
-	# These are the raw grid lines
-	WriteArrayToFile(coords, 'coords.csv')
-
 	# These are the unique xs and ys
 	# skip by 3 because the top and bottom grids are doubled.
 	xcoords = coords[0::3]
@@ -71,36 +62,70 @@ def ReadGrid(gridfilename):
 	ycoords = list(OrderedDict.fromkeys(ycoords))
 	print ycoords
 
-	# points can be used as the vtkPoints for the ugrid, 
-	# I think.
+	# This section needs serious clean up, but it works.
+	# The issue is that while z's are unique, x's and y's
+	# are repeated, but not always.
 	i = 0
 	j = 0
-	points = []
-	for z in zcorn:
-		p = [xcoords[i], ycoords[j], z]
+	pts = vtkPoints()
+	repeatY = False
+	for k in range(0,len(zcorn)-1,2):
+		p1 = [xcoords[i], ycoords[j], zcorn[k]] 	
+		p2 = [xcoords[i+1], ycoords[j], zcorn[k+1]]
+		pts.InsertPoint(k, p1)
+		pts.InsertPoint(k+1, p2)
 		i = i + 1
-		if i == len(xcoords):
+		if i > len(xcoords) - 2:
 			i = 0
-			j = j + 1
-			if j == len(ycoords):
-				j = 0
-		
-		points.extend(p)
-	WriteArrayToFile(points, 'points.csv')
+			if not repeatY:
+				if j < len(ycoords) - 1:
+					j = j + 1
+					repeatY = True
+					if j == len(ycoords) - 1:
+						repeatY = False
+				elif j == len(ycoords) - 1:
+					j = 0
+			else:
+				repeatY = False
+	
+	ugrid = vtkUnstructuredGrid()
+	ugrid.SetPoints(pts)
 
-	# cells -> the trick is to figure ou the pattern for the zeroeth
-	# cell, then how that changes.
-
+	# The index pattern for ZCORN of the zeroeth cell.
 	cellZeroPattern = [0, 1, 2*xdim, 2*xdim+1, 4*ydim*xdim, 4*ydim*xdim+1, 4*ydim*xdim+2*xdim, 4*ydim*xdim+2*xdim+1]
 
-	# this should be used with InsertNextCell, I think
 	for k in range(zdim):
 		for j in range(ydim):
 			for i in range(xdim):
-				print [x+(2*i)+(4*j*xdim)+(8*k*xdim*ydim) + 1 for x in cellZeroPattern]
+				cell = vtkHexahedron()
+				pattern = [x+(2*i)+(4*j*xdim)+(8*k*xdim*ydim) for x in cellZeroPattern]
+				
+				# Note that VTK ordering is a winding pattern on top 
+				# and bottom faces so it's not a straight translation 
+				# of index order.
+				cell.GetPointIds().SetId(0, pattern[0]);
+				cell.GetPointIds().SetId(1, pattern[1]);
+				cell.GetPointIds().SetId(2, pattern[3]);
+				cell.GetPointIds().SetId(3, pattern[2]);
+				cell.GetPointIds().SetId(4, pattern[4]);
+				cell.GetPointIds().SetId(5, pattern[5]);
+				cell.GetPointIds().SetId(6, pattern[7]);
+				cell.GetPointIds().SetId(7, pattern[6]);
+	
+				ugrid.InsertNextCell(cell.GetCellType(), cell.GetPointIds())
 
+	legacyWriter = vtkUnstructuredGridWriter()
+	legacyWriter.SetFileName(gridfilename + '.vtk')
+	legacyWriter.SetInputData(ugrid)
+	legacyWriter.Write()
+
+	xmlWriter = vtkXMLUnstructuredGridWriter()
+	xmlWriter.SetFileName(gridfilename + '.vtu')
+	xmlWriter.SetInputData(ugrid)
+	xmlWriter.Write()
 
 def ConvertTokens(line):
+	'''Expands tokens of the type N*data to N copies of data.'''
 	values = []
 	for t in line.split():
 		if t.find('*') == -1:
