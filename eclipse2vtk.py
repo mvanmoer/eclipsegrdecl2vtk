@@ -161,19 +161,6 @@ def ConvertTokens(line):
 	
 	return values			
 
-def WriteArrayToFile(a, name):
-	flag = 0
-	f = open(name, 'w')
-	for e in a:
-		f.write(str(e))
-		flag = flag + 1
-		if flag != 3:
-			f.write(' ')
-		else:
-			f.write('\n')
-			flag = 0	
-	f.close()
-
 if __name__ == '__main__':
 	
 	ConvertGrid(sys.argv[1])
