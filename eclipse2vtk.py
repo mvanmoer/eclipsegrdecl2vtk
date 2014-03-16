@@ -11,7 +11,7 @@ from collections import OrderedDict
 import sys
 from vtk import *
 
-def ReadGrid(gridfilename):
+def ConvertGrid(gridfilename):
 
 	# Contains expanded COORDS section.
 	coords = []
@@ -22,6 +22,12 @@ def ReadGrid(gridfilename):
 	# This runs fastest in x then y but to account for faults, all
 	# cells have individual corners.
 	zcorn = []
+
+	# various scalars
+	permx = []
+	permy = []
+	permz = []
+	poro  = []
 
 	gridfile = open(gridfilename)
 
@@ -35,21 +41,28 @@ def ReadGrid(gridfilename):
 			# Skip, was matching against just COORD
 			next
 		elif line.startswith('COORD'):
-			while True:
-				vals = ConvertTokens(next(gridfile))
-				coords.extend(vals)
-				if coords[-1] == '/':
-					coords.pop()
-					coords = map(float, coords)
-					break
+			coords = ReadSection(gridfile)
 		elif line.startswith('ZCORN'):
-			while True:
-				vals = ConvertTokens(next(gridfile))
-				zcorn.extend(vals)
-				if zcorn[-1] == '/':	
-					zcorn.pop()
-					zcorn = map(float, zcorn)
-					break	
+			zcorn = ReadSection(gridfile)
+		# Are comments guaranteed to be the 2nd line in the following?
+		elif line.startswith('PERMX'):
+			# discard comment line
+			next(gridfile)
+			permx = ReadSection(gridfile)
+		elif line.startswith('PERMY'):
+			next(gridfile)
+			permy = ReadSection(gridfile)
+		elif line.startswith('PERMZ'):
+			next(gridfile)
+			permz = ReadSection(gridfile)	
+		elif line.startswith('PORO'):
+			next(gridfile)
+			poro = ReadSection(gridfile)	
+		elif line.startswith('--'):
+			# comment line, ignore
+			next
+		else:
+			print "skipped section"
 
 	gridfile.close()
 
@@ -122,6 +135,19 @@ def ReadGrid(gridfilename):
 	xmlWriter.SetInputData(ugrid)
 	xmlWriter.Write()
 
+def ReadSection(f):
+	'''Reads a data section. Assumes no interior comments. Returns an
+	   expanded array.'''
+	section = []
+	while True:
+		vals = ConvertTokens(next(f))
+		section.extend(vals)
+		if section[-1] == '/':	
+			section.pop()
+			section = map(float, section)
+			break	
+	return section
+
 def ConvertTokens(line):
 	'''Expands tokens of the type N*data to N copies of data.'''
 	values = []
@@ -150,4 +176,4 @@ def WriteArrayToFile(a, name):
 
 if __name__ == '__main__':
 	
-	ReadGrid(sys.argv[1])
+	ConvertGrid(sys.argv[1])
