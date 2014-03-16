@@ -14,9 +14,6 @@ import sys
 
 def ReadGrid(gridfilename):
 
-	# X dim, Y dim, Z dim	
-	celldims = []
-
 	# x0 y0 zmin x0 y0 zmax x0 y1 zmin x0 y1 zmax
 	# so z, y, x, fastest, with z flipping between min and max
     # size should be Xdim+1*Ydim+1*2
@@ -32,8 +29,10 @@ def ReadGrid(gridfilename):
 
 	for line in gridfile:
 		if line.startswith('SPECGRID'):
-			celldims = next(gridfile).split()[0:3]
-			celldims = map(int, celldims)
+			xdim, ydim, zdim = next(gridfile).split()[0:3]
+			xdim = int(xdim)
+			ydim = int(ydim)
+			zdim = int(zdim)
 		elif line.startswith('COORDSYS'):
 			# Skip for now
 			next
@@ -56,7 +55,7 @@ def ReadGrid(gridfilename):
 
 	gridfile.close()
 
-	print 'len(celldims): ', len(celldims)
+	print 'xdim: ',xdim,' ydim: ',ydim,' zdim: ',zdim	
 	print 'len(coords):   ', len(coords)
 	print 'len(zcorn):    ', len(zcorn)
 
@@ -91,9 +90,6 @@ def ReadGrid(gridfilename):
 
 	# cells -> the trick is to figure ou the pattern for the zeroeth
 	# cell, then how that changes.
-	xdim = celldims[0]
-	ydim = celldims[1]
-	zdim = celldims[2]
 
 	cellZeroPattern = [0, 1, 2*xdim, 2*xdim+1, 4*ydim*xdim, 4*ydim*xdim+1, 4*ydim*xdim+2*xdim, 4*ydim*xdim+2*xdim+1]
 
