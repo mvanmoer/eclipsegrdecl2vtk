@@ -10,6 +10,7 @@
 # This can appear in any section, apparently.
 
 from collections import OrderedDict
+import sys
 
 def ReadGrid(gridfilename):
 
@@ -57,8 +58,9 @@ def ReadGrid(gridfilename):
 	print 'len(celldims): ', len(celldims)
 	print 'len(coords):   ', len(coords)
 	print 'len(zcorn):    ', len(zcorn)
-	WriteArrayToFile(coords)
+	WriteArrayToFile(coords, 'coords.csv')
 
+	# skip by 3 because the top and bottom grids are doubled.
 	xcoords = coords[0::3]
 	xcoords = list(OrderedDict.fromkeys(xcoords))
 	print xcoords
@@ -66,6 +68,21 @@ def ReadGrid(gridfilename):
 	ycoords = list(OrderedDict.fromkeys(ycoords))
 	print ycoords
 
+	i = 0
+	j = 0
+	points = []
+	for z in zcorn:
+		p = [xcoords[i], ycoords[j], z]
+		i = i + 1
+		if i == len(xcoords):
+			i = 0
+			j = j + 1
+			if j == len(ycoords):
+				j = 0
+		
+		points.extend(p)
+
+	WriteArrayToFile(points, 'points.csv')
 
 def ConvertTokens(line):
 	values = []
@@ -79,14 +96,14 @@ def ConvertTokens(line):
 	
 	return values			
 
-def WriteArrayToFile(a):
+def WriteArrayToFile(a, name):
 	flag = 0
-	f = open('test.csv', 'w')
+	f = open(name, 'w')
 	for e in a:
 		f.write(str(e))
 		flag = flag + 1
 		if flag != 3:
-			f.write(',')
+			f.write(' ')
 		else:
 			f.write('\n')
 			flag = 0	
@@ -94,4 +111,4 @@ def WriteArrayToFile(a):
 
 if __name__ == '__main__':
 	
-	ReadGrid('scenario0.grdecl')
+	ReadGrid(sys.argv[1])
