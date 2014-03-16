@@ -57,10 +57,8 @@ def ReadGrid(gridfilename):
 	# skip by 3 because the top and bottom grids are doubled.
 	xcoords = coords[0::3]
 	xcoords = list(OrderedDict.fromkeys(xcoords))
-	print xcoords
 	ycoords = coords[1::3]
 	ycoords = list(OrderedDict.fromkeys(ycoords))
-	print ycoords
 
 	# This section needs serious clean up, but it works.
 	# The issue is that while z's are unique, x's and y's
