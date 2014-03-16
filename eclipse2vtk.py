@@ -24,7 +24,8 @@ def ReadGrid(gridfilename):
 		
 	# ONLY the z-coord for the bricks.
     # size should be Xdim*Ydim*Zdim*8
-	# this runs fastest in x then y
+	# this runs fastest in x then y but to account for faults, all
+	# cells have individual corners.
 	zcorn = []
 
 	gridfile = open(gridfilename)
@@ -58,8 +59,11 @@ def ReadGrid(gridfilename):
 	print 'len(celldims): ', len(celldims)
 	print 'len(coords):   ', len(coords)
 	print 'len(zcorn):    ', len(zcorn)
+
+	# These are the raw grid lines
 	WriteArrayToFile(coords, 'coords.csv')
 
+	# These are the unique xs and ys
 	# skip by 3 because the top and bottom grids are doubled.
 	xcoords = coords[0::3]
 	xcoords = list(OrderedDict.fromkeys(xcoords))
@@ -68,6 +72,8 @@ def ReadGrid(gridfilename):
 	ycoords = list(OrderedDict.fromkeys(ycoords))
 	print ycoords
 
+	# points can be used as the vtkPoints for the ugrid, 
+	# I think.
 	i = 0
 	j = 0
 	points = []
@@ -81,8 +87,22 @@ def ReadGrid(gridfilename):
 				j = 0
 		
 		points.extend(p)
-
 	WriteArrayToFile(points, 'points.csv')
+
+	# cells -> the trick is to figure ou the pattern for the zeroeth
+	# cell, then how that changes.
+	xdim = celldims[0]
+	ydim = celldims[1]
+	zdim = celldims[2]
+
+	cellZeroPattern = [0, 1, 2*xdim, 2*xdim+1, 4*ydim*xdim, 4*ydim*xdim+1, 4*ydim*xdim+2*xdim, 4*ydim*xdim+2*xdim+1]
+
+	# this should be used with InsertNextCell, I think
+	for k in range(zdim):
+		for j in range(ydim):
+			for i in range(xdim):
+				print [x+(2*i)+(4*j*xdim)+(8*k*xdim*ydim) + 1 for x in cellZeroPattern]
+
 
 def ConvertTokens(line):
 	values = []
