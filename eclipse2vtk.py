@@ -25,7 +25,7 @@ def ConvertGrid(gridfilename):
 
 	# creating an empty vtkUnstructuredGrid here so it 
 	# can be filled as the scalars are read in.
-	ugrid = vtkUnstructuredGrid()
+	ug = vtkUnstructuredGrid()
 
 	# various scalars
 	permx = []
@@ -57,7 +57,7 @@ def ConvertGrid(gridfilename):
 			ycoords = list(OrderedDict.fromkeys(ycoords))
 		elif line.startswith('ZCORN'):
 			zcorn = ReadSection(gridfile)
-			ugrid = CreateVTKCells(ugrid, xdim, ydim, zdim)
+			ug = CreateVTKCells(ug, xdim, ydim, zdim)
 		# Are comments guaranteed to be the 2nd line in the following?
 		elif line.startswith('PERMX'):
 			# discard comment line
@@ -78,21 +78,24 @@ def ConvertGrid(gridfilename):
 	gridfile.close()
 
 		
-	ugrid.SetPoints(CreateVTKPoints(xcoords, ycoords, zcorn))
+	ug.SetPoints(CreateVTKPoints(xcoords, ycoords, zcorn))
 
-	ugrid.GetCellData().AddArray(CreateVTKArray('PERMX', permx))
-	ugrid.GetCellData().AddArray(CreateVTKArray('PERMY', permy))
-	ugrid.GetCellData().AddArray(CreateVTKArray('PERMZ', permz))
-	ugrid.GetCellData().AddArray(CreateVTKArray('PORO', poro))
+	ug.GetCellData().AddArray(CreateVTKArray('PERMX', permx))
+	ug.GetCellData().AddArray(CreateVTKArray('PERMY', permy))
+	ug.GetCellData().AddArray(CreateVTKArray('PERMZ', permz))
+	ug.GetCellData().AddArray(CreateVTKArray('PORO', poro))
 
+	return ug
+
+def WriteUGrid(ug, n):
 	legacyWriter = vtkUnstructuredGridWriter()
-	legacyWriter.SetFileName(gridfilename + '.vtk')
-	legacyWriter.SetInputData(ugrid)
+	legacyWriter.SetFileName(n + '.vtk')
+	legacyWriter.SetInputData(ug)
 	legacyWriter.Write()
 
 	xmlWriter = vtkXMLUnstructuredGridWriter()
-	xmlWriter.SetFileName(gridfilename + '.vtu')
-	xmlWriter.SetInputData(ugrid)
+	xmlWriter.SetFileName(n + '.vtu')
+	xmlWriter.SetInputData(ug)
 	xmlWriter.Write()
 
 def CreateVTKArray(n,a):
@@ -186,4 +189,5 @@ def ConvertTokens(line):
 
 if __name__ == '__main__':
 	
-	ConvertGrid(sys.argv[1])
+	ugrid = ConvertGrid(sys.argv[1])
+	WriteUGrid(ugrid, sys.argv[1])
