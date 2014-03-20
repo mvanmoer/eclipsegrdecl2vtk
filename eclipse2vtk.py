@@ -39,7 +39,7 @@ def ConvertGrid(gridfilename):
 	for line in gridfile:
 		if line.startswith('--'):
 			# skip comments
-			next
+			continue	
 		elif line.startswith('SPECGRID'):
 			xdim, ydim, zdim = next(gridfile).split()[0:3]
 			xdim = int(xdim)
@@ -156,17 +156,15 @@ def CreateVTKPoints(x, y, z):
 					j = 0
 			else:
 				repeatY = False
-
 	return pts
 
 def ReadSection(f):
-	'''Reads a data section. Assumes no interior comments. Returns an
-	   expanded array.'''
+	'''Reads a data section and returns an expanded array.'''
 	section = []
 	while True:
 		line = next(f)
 		if line.startswith('--'):
-			next
+			continue	
 		vals = ConvertTokens(line)
 		section.extend(vals)
 		if section[-1] == '/':	
