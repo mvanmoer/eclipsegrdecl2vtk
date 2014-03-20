@@ -47,7 +47,7 @@ def ConvertGrid(gridfilename):
 			zdim = int(zdim)
 		elif line.startswith('COORDSYS'):
 			# Skip, was matching against just COORD
-			next
+			continue	
 		elif line.startswith('COORD'):
 			coords = ReadSection(gridfile)
 			# These are the unique xs and ys
