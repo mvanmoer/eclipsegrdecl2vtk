@@ -23,6 +23,10 @@ def ConvertGrid(gridfilename):
 	# cells have individual corners.
 	zcorn = []
 
+	# creating an empty vtkUnstructuredGrid here so it 
+	# can be filled as the scalars are read in.
+	ugrid = vtkUnstructuredGrid()
+
 	# various scalars
 	permx = []
 	permy = []
@@ -45,8 +49,15 @@ def ConvertGrid(gridfilename):
 			next
 		elif line.startswith('COORD'):
 			coords = ReadSection(gridfile)
+			# These are the unique xs and ys
+			# skip by 3 because the top and bottom grids are doubled.
+			xcoords = coords[0::3]
+			xcoords = list(OrderedDict.fromkeys(xcoords))
+			ycoords = coords[1::3]
+			ycoords = list(OrderedDict.fromkeys(ycoords))
 		elif line.startswith('ZCORN'):
 			zcorn = ReadSection(gridfile)
+			ugrid = CreateVTKCells(ugrid, xdim, ydim, zdim)
 		# Are comments guaranteed to be the 2nd line in the following?
 		elif line.startswith('PERMX'):
 			# discard comment line
@@ -66,15 +77,7 @@ def ConvertGrid(gridfilename):
 
 	gridfile.close()
 
-	# These are the unique xs and ys
-	# skip by 3 because the top and bottom grids are doubled.
-	xcoords = coords[0::3]
-	xcoords = list(OrderedDict.fromkeys(xcoords))
-	ycoords = coords[1::3]
-	ycoords = list(OrderedDict.fromkeys(ycoords))
-	
-	ugrid = vtkUnstructuredGrid()
-	ugrid = CreateVTKCells(ugrid, xdim, ydim, zdim)
+		
 	ugrid.SetPoints(CreateVTKPoints(xcoords, ycoords, zcorn))
 
 	ugrid.GetCellData().AddArray(CreateVTKArray('PERMX', permx))
