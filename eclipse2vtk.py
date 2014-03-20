@@ -40,14 +40,21 @@ def ConvertGrid(gridfilename):
 		if line.startswith('--') or not line.strip():
 			# skip comments and blank lines
 			continue	
+		elif line.startswith('PINCH'):
+			SkipSection(gridfile)
+		elif line.startswith('MAPUNITS'):
+			SkipSection(gridfile)
+		elif line.startswith('MAPAXES'):
+			SkipSection(gridfile)
+		elif line.startswith('GRIDUNIT'): 
+			SkipSection(gridfile)
+		elif line.startswith('COORDSYS'):
+			SkipSection(gridfile)
 		elif line.startswith('SPECGRID'):
 			xdim, ydim, zdim = next(gridfile).split()[0:3]
 			xdim = int(xdim)
 			ydim = int(ydim)
 			zdim = int(zdim)
-		elif line.startswith('COORDSYS'):
-			# Skip, was matching against just COORD
-			continue	
 		elif line.startswith('COORD'):
 			coords = ReadSection(gridfile)
 			# These are the unique xs and ys
@@ -71,7 +78,7 @@ def ConvertGrid(gridfilename):
 		elif line.startswith('PORO'):
 			poro = ReadSection(gridfile)	
 		else:
-			print "skipped section: ", line[:8]
+			print "else section: ", line[:8]
 
 	gridfile.close()
 
@@ -156,6 +163,13 @@ def CreateVTKPoints(x, y, z):
 			else:
 				repeatY = False
 	return pts
+
+def SkipSection(f):
+	'''Skips over an unprocessed section.'''
+	while True:
+		line = next(f).rstrip()
+		if line.endswith('/'):
+			return	
 
 def ReadSection(f):
 	'''Reads a data section and returns an expanded array.'''
