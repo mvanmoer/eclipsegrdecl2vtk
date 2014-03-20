@@ -32,7 +32,10 @@ def ConvertGrid(gridfilename):
 	gridfile = open(gridfilename)
 
 	for line in gridfile:
-		if line.startswith('SPECGRID'):
+		if line.startswith('--'):
+			# skip comments
+			next
+		elif line.startswith('SPECGRID'):
 			xdim, ydim, zdim = next(gridfile).split()[0:3]
 			xdim = int(xdim)
 			ydim = int(ydim)
@@ -58,9 +61,6 @@ def ConvertGrid(gridfilename):
 		elif line.startswith('PORO'):
 			next(gridfile)
 			poro = ReadSection(gridfile)	
-		elif line.startswith('--'):
-			# comment line, ignore
-			next
 		else:
 			print "skipped section"
 
