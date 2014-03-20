@@ -37,8 +37,8 @@ def ConvertGrid(gridfilename):
 	gridfile = open(gridfilename)
 
 	for line in gridfile:
-		if line.startswith('--'):
-			# skip comments
+		if line.startswith('--') or not line.strip():
+			# skip comments and blank lines
 			continue	
 		elif line.startswith('SPECGRID'):
 			xdim, ydim, zdim = next(gridfile).split()[0:3]
@@ -59,7 +59,7 @@ def ConvertGrid(gridfilename):
 		elif line.startswith('ZCORN'):
 			zcorn = ReadSection(gridfile)
 			ug = CreateVTKCells(ug, xdim, ydim, zdim)
-			
+			ug.SetPoints(CreateVTKPoints(xcoords, ycoords, zcorn))
 		# Are comments guaranteed to be the 2nd line in the following?
 		# NO! I found an example where the comment was before PORO
 		elif line.startswith('PERMX'):
@@ -71,12 +71,11 @@ def ConvertGrid(gridfilename):
 		elif line.startswith('PORO'):
 			poro = ReadSection(gridfile)	
 		else:
-			print "skipped section"
+			print "skipped section: ", line[:8]
 
 	gridfile.close()
 
 		
-	ug.SetPoints(CreateVTKPoints(xcoords, ycoords, zcorn))
 
 	ug.GetCellData().AddArray(CreateVTKArray('PERMX', permx))
 	ug.GetCellData().AddArray(CreateVTKArray('PERMY', permy))
