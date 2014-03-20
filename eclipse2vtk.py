@@ -72,38 +72,40 @@ def ConvertGrid(gridfilename):
 	xcoords = list(OrderedDict.fromkeys(xcoords))
 	ycoords = coords[1::3]
 	ycoords = list(OrderedDict.fromkeys(ycoords))
-
-	# This section needs serious clean up, but it works.
-	# The issue is that while z's are unique, x's and y's
-	# are repeated, but not always.
-	i = 0
-	j = 0
-	pts = vtkPoints()
-	repeatY = False
-	for k in range(0,len(zcorn)-1,2):
-		p1 = [xcoords[i], ycoords[j], zcorn[k]] 	
-		p2 = [xcoords[i+1], ycoords[j], zcorn[k+1]]
-		pts.InsertPoint(k, p1)
-		pts.InsertPoint(k+1, p2)
-		i = i + 1
-		if i > len(xcoords) - 2:
-			i = 0
-			if not repeatY:
-				if j < len(ycoords) - 1:
-					j = j + 1
-					repeatY = True
-					if j == len(ycoords) - 1:
-						repeatY = False
-				elif j == len(ycoords) - 1:
-					j = 0
-			else:
-				repeatY = False
 	
 	ugrid = vtkUnstructuredGrid()
-	ugrid.SetPoints(pts)
+	ugrid = CreateVTKCells(ugrid, xdim, ydim, zdim)
+	ugrid.SetPoints(CreateVTKPoints(xcoords, ycoords, zcorn))
 
+	ugrid.GetCellData().AddArray(CreateVTKArray('PERMX', permx))
+	ugrid.GetCellData().AddArray(CreateVTKArray('PERMY', permy))
+	ugrid.GetCellData().AddArray(CreateVTKArray('PERMZ', permz))
+	ugrid.GetCellData().AddArray(CreateVTKArray('PORO', poro))
+
+	legacyWriter = vtkUnstructuredGridWriter()
+	legacyWriter.SetFileName(gridfilename + '.vtk')
+	legacyWriter.SetInputData(ugrid)
+	legacyWriter.Write()
+
+	xmlWriter = vtkXMLUnstructuredGridWriter()
+	xmlWriter.SetFileName(gridfilename + '.vtu')
+	xmlWriter.SetInputData(ugrid)
+	xmlWriter.Write()
+
+def CreateVTKArray(n,a):
+	'''Create a VTK array from a Python list. Doesn't appear to be a
+	   method that takes a list directly.'''
+	fa = vtkFloatArray()
+	fa.SetName(n)
+	fa.SetNumberOfComponents(1)
+	for i in a:
+		fa.InsertNextTuple1(i)
+	return fa
+
+def CreateVTKCells(ug, xdim, ydim, zdim):
 	# The index pattern for ZCORN of the zeroeth cell.
-	cellZeroPattern = [0, 1, 2*xdim, 2*xdim+1, 4*ydim*xdim, 4*ydim*xdim+1, 4*ydim*xdim+2*xdim, 4*ydim*xdim+2*xdim+1]
+	cellZeroPattern = [0, 1, 2*xdim, 2*xdim+1, 
+	4*ydim*xdim, 4*ydim*xdim+1, 4*ydim*xdim+2*xdim, 4*ydim*xdim+2*xdim+1]
 
 	for k in range(zdim):
 		for j in range(ydim):
@@ -123,17 +125,35 @@ def ConvertGrid(gridfilename):
 				cell.GetPointIds().SetId(6, pattern[7]);
 				cell.GetPointIds().SetId(7, pattern[6]);
 	
-				ugrid.InsertNextCell(cell.GetCellType(), cell.GetPointIds())
+				ug.InsertNextCell(cell.GetCellType(), cell.GetPointIds())
 
-	legacyWriter = vtkUnstructuredGridWriter()
-	legacyWriter.SetFileName(gridfilename + '.vtk')
-	legacyWriter.SetInputData(ugrid)
-	legacyWriter.Write()
+	return ug
 
-	xmlWriter = vtkXMLUnstructuredGridWriter()
-	xmlWriter.SetFileName(gridfilename + '.vtu')
-	xmlWriter.SetInputData(ugrid)
-	xmlWriter.Write()
+def CreateVTKPoints(x, y, z):
+	i = 0
+	j = 0
+	pts = vtkPoints()
+	repeatY = False
+	for k in range(0,len(z)-1,2):
+		p1 = [x[i], y[j], z[k]] 	
+		p2 = [x[i+1], y[j], z[k+1]]
+		pts.InsertPoint(k, p1)
+		pts.InsertPoint(k+1, p2)
+		i = i + 1
+		if i > len(x) - 2:
+			i = 0
+			if not repeatY:
+				if j < len(y) - 1:
+					j = j + 1
+					repeatY = True
+					if j == len(y) - 1:
+						repeatY = False
+				elif j == len(y) - 1:
+					j = 0
+			else:
+				repeatY = False
+
+	return pts
 
 def ReadSection(f):
 	'''Reads a data section. Assumes no interior comments. Returns an
