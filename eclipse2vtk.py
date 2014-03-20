@@ -28,11 +28,12 @@ def ConvertGrid(gridfilename):
 	ug = vtkUnstructuredGrid()
 
 	# various scalars
+	actnum = []
 	permx = []
 	permy = []
 	permz = []
 	poro  = []
-
+	
 	gridfile = open(gridfilename)
 
 	for line in gridfile:
@@ -58,19 +59,16 @@ def ConvertGrid(gridfilename):
 		elif line.startswith('ZCORN'):
 			zcorn = ReadSection(gridfile)
 			ug = CreateVTKCells(ug, xdim, ydim, zdim)
+			
 		# Are comments guaranteed to be the 2nd line in the following?
+		# NO! I found an example where the comment was before PORO
 		elif line.startswith('PERMX'):
-			# discard comment line
-			next(gridfile)
 			permx = ReadSection(gridfile)
 		elif line.startswith('PERMY'):
-			next(gridfile)
 			permy = ReadSection(gridfile)
 		elif line.startswith('PERMZ'):
-			next(gridfile)
 			permz = ReadSection(gridfile)	
 		elif line.startswith('PORO'):
-			next(gridfile)
 			poro = ReadSection(gridfile)	
 		else:
 			print "skipped section"
@@ -166,7 +164,10 @@ def ReadSection(f):
 	   expanded array.'''
 	section = []
 	while True:
-		vals = ConvertTokens(next(f))
+		line = next(f)
+		if line.startswith('--'):
+			next
+		vals = ConvertTokens(line)
 		section.extend(vals)
 		if section[-1] == '/':	
 			section.pop()
