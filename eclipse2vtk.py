@@ -67,27 +67,27 @@ def ConvertGrid(gridfilename):
 			zcorn = ReadSection(gridfile)
 			ug = CreateVTKCells(ug, xdim, ydim, zdim)
 			ug.SetPoints(CreateVTKPoints(xcoords, ycoords, zcorn))
-		# Are comments guaranteed to be the 2nd line in the following?
-		# NO! I found an example where the comment was before PORO
+
+		elif line.startswith('ACTNUM'):
+			ug = ReadScalarSection('ACTNUM', gridfile, ug)
+		elif line.startswith('EQLNUM'):
+			ug = ReadScalarSection('EQLNUM', gridfile, ug)
+		elif line.startswith('SATNUM'):
+			ug = ReadScalarSection('SATNUM', gridfile, ug)
+		elif line.startswith('FIPNUM'):
+			ug = ReadScalarSection('FIPNUM', gridfile, ug)
 		elif line.startswith('PERMX'):
-			permx = ReadSection(gridfile)
+			ug = ReadScalarSection('PERMX', gridfile, ug)	
 		elif line.startswith('PERMY'):
-			permy = ReadSection(gridfile)
+			ug = ReadScalarSection('PERMY', gridfile, ug)
 		elif line.startswith('PERMZ'):
-			permz = ReadSection(gridfile)	
+			ug = ReadScalarSection('PERMZ', gridfile, ug)	
 		elif line.startswith('PORO'):
-			poro = ReadSection(gridfile)	
+			ug = ReadScalarSection('PORO', gridfile, ug)	
 		else:
 			print "else section: ", line[:8]
 
 	gridfile.close()
-
-		
-
-	ug.GetCellData().AddArray(CreateVTKArray('PERMX', permx))
-	ug.GetCellData().AddArray(CreateVTKArray('PERMY', permy))
-	ug.GetCellData().AddArray(CreateVTKArray('PERMZ', permz))
-	ug.GetCellData().AddArray(CreateVTKArray('PORO', poro))
 
 	return ug
 
@@ -185,6 +185,15 @@ def ReadSection(f):
 			section = map(float, section)
 			break	
 	return section
+
+def ReadScalarSection(n, f, ug):
+	'''Reads a section of scalars, adds them to the unstructured
+	grid array.'''
+	
+	scalars = ReadSection(f)
+	ug.GetCellData().AddArray(CreateVTKArray(n, scalars))
+	
+	return ug
 
 def ConvertTokens(line):
 	'''Expands tokens of the type N*data to N copies of data.'''
