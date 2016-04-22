@@ -3,7 +3,9 @@
 # 20140312 - start
 
 # Convert Eclipse format to VTK
-# inputs, a grid file and a data file.
+# inputs: a grid file and a data file.
+# This follows the eclipse format as described at petrofaq.org
+# http://petrofaq.org/wiki/Eclipse_Input_Data
 
 #!/usr/bin/env vtkpython
 
