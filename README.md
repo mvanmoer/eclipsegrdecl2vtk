@@ -8,3 +8,5 @@ grid has a regular topology or not.
 
 The supported scalars ACTNUM, EQLNUM, SATNUM, FIPNUM, PERM{X|Y|Z}, and PORO were based on the available test data. 
 To add support for additional scalars, just follow the same elif structure and call to ReadScalarSection.
+
+This script was developed against output from Petrel 2012.2. It may or may not work with grdecl files from any other source.
