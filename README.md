@@ -10,3 +10,5 @@ The supported scalars ACTNUM, EQLNUM, SATNUM, FIPNUM, PERM{X|Y|Z}, and PORO were
 To add support for additional scalars, just follow the same elif structure and call to ReadScalarSection.
 
 This script was developed against output from Petrel 2012.2. It may or may not work with grdecl files from any other source.
+
+2020-02-10: This has been tested with VTK 8.0.1 using Python 2.7.12 and VTK 8.2.0 using Python 3.5.2.
