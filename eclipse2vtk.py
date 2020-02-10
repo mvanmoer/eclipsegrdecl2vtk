@@ -18,7 +18,6 @@ def ConvertGrid(gridfilename):
 
     # Contains expanded COORDS section.
     coords = []
-        
     # Contains expanded ZCORN section which has ONLY the z-coord 
     # for the bricks. x- y-coords are derived from coords[].
     # Size should be Xdim*Ydim*Zdim*8.
@@ -88,7 +87,7 @@ def ConvertGrid(gridfilename):
         elif line.startswith('PORO'):
             ug = ReadScalarSection('PORO', gridfile, ug)    
         else:
-            print "else section: ", line[:8]
+            print("else section: {}".format(line[:8]))
 
     gridfile.close()
 
@@ -185,7 +184,7 @@ def ReadSection(f):
         section.extend(vals)
         if section[-1] == '/':  
             section.pop()
-            section = map(float, section)
+            section = list(map(float, section))
             break   
     return section
 
