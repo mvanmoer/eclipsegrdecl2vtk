@@ -6,6 +6,7 @@
 # inputs: a grid file and a data file.
 # This follows the eclipse format as described at petrofaq.org
 # http://petrofaq.org/wiki/Eclipse_Input_Data
+# Tested against output from Petrel 2012.2.
 
 #!/usr/bin/env vtkpython
 
